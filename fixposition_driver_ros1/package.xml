@@ -19,4 +19,5 @@
     <depend>message_runtime</depend>
     <depend>fixposition_gnss_tf</depend>
     <depend>fixposition_driver_lib</depend>
+    <depend>eigen_conversions</depend>
 </package>
