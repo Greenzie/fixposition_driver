@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Fixposition AG <info@fixposition.com>
 Build-Depends: debhelper (>= 9.0.0),
   ros-noetic-catkin,
+  ros-noetic-eigen-conversions,
   ros-noetic-fixposition-driver-lib,
   ros-noetic-fixposition-gnss-tf,
   ros-noetic-geometry-msgs,
@@ -21,6 +22,7 @@ Package: ros-noetic-fixposition-driver-ros1
 Architecture: any
 Depends: ${shlibs:Depends},
   ${misc:Depends},
+  ros-noetic-eigen-conversions,
   ros-noetic-fixposition-driver-lib,
   ros-noetic-fixposition-gnss-tf,
   ros-noetic-geometry-msgs,
