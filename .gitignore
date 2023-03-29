@@ -1,2 +1,4 @@
 doc_gen/*
 *.vscode*
+.idea
+**/changelog

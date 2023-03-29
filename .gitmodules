@@ -1,0 +1,4 @@
+[submodule "fixposition_gnss_tf"]
+	path = fixposition_gnss_tf
+	url = https://github.com/Greenzie/fixposition_gnss_tf
+	branch = kakaday22/debianizing_update-fixposition-gnss-to-3
