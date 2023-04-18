@@ -159,7 +159,7 @@ void FixpositionDriverNode::Run() {
 }
 
 void FixpositionDriverNode::WsCallback(const fixposition_driver_ros1::SpeedConstPtr& msg) {
-    // ROS_WARN("WsCallback");
+    ROS_WARN("WsCallback");
     FixpositionDriver::WsCallback(msg->speeds);
 }
 
