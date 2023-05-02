@@ -53,9 +53,7 @@ jobs:
     needs:
       - debianize
     timeout-minutes: 10
-    runs-on:
-      - self-hosted
-      - greenzie
+    runs-on: ubuntu-latest
     container:
       image: greenzie/aptly:3.15.5-focal-noetic
       credentials:
