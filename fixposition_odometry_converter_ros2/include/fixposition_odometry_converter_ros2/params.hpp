@@ -8,6 +8,8 @@
  *   \  \/  /   Fixposition AG
  *   /  /\  \   All right reserved.
  *  /__/  \__\
+ * 
+ * Port to ROS 2 by Husarion
  * \endverbatim
  *
  */
@@ -18,9 +20,8 @@
 /* SYSTEM / STL */
 #include <string>
 
-/* EXTERNAL */
-
-/* PACKAGE */
+/* ROS */
+#include <rclcpp/rclcpp.hpp>
 
 namespace fixposition {
 
@@ -33,13 +34,15 @@ struct OdomInputParams {
     int multiplicative_factor;
     bool use_angular;
     /**
-     * @brief Load all parameters from ROS parameter server
+     * @brief Load all parameters from ROS 2
      *
-     * @param[in] ns namespace to load the parameters from
+     * @param[in] param_itf parameter interface
+     * @param[in] logging_itf logging interface
      * @return true success
      * @return false fail
      */
-    bool LoadFromRos(const std::string& ns);
+    bool LoadFromRos(const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& param_itf,
+                     const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging_itf);
 };
 
 }  // namespace fixposition
