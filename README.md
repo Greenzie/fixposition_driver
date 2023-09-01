@@ -3,7 +3,6 @@
 -   [ROS1 melodic / noetic ![](./../../actions/workflows/build_test_ros.yml/badge.svg)](./../../actions/workflows/build_test_ros.yml)
 -   [ROS2 foxy / humble ![](./../../actions/workflows/build_test_ros2.yml/badge.svg)](./../../actions/workflows/build_test_ros2.yml)
 
-
 [ROS](https://www.ros.org/) (both ROS1 and ROS2) Driver for [Fixposition Vision-RTK 2](https://www.fixposition.com/product).
 
 The driver is designed to listen on a TCP or Serial port for the [_Fixposition ASCII Messages_](#fixposition-ascii-messages), and then publish them as corresponding ROS messages. At the same time, the driver can also subscribe to a speed input message, which will be sent back to the Vision-RTK 2 sensor and provide an external speed input.
@@ -11,32 +10,7 @@ The driver is designed to listen on a TCP or Serial port for the [_Fixposition A
 -   For the output ROS messages, see [Output of the driver](#output-of-the-driver)
 -   For the input ROS messages for speed input, see [Input Wheelspeed through the driver](#input-wheelspeed-through-the-driver)
 
-## Changelogs
-
-_For questions about compatibility, please contact Fixpositions Support support@fixposition.com_
--   [6.0.2](https://github.com/fixposition/fixposition_driver/releases/tag/6.0.2)
-    -   Add missing depencency of `tf2_eigen` in `fixposition_driver_ros2/CMakeList.txt`
--   [6.0.1](https://github.com/fixposition/fixposition_driver/releases/tag/6.0.1)
-    -   Adapted to be compatible with updated Fixposition message definitions
-    -   **Compatible with Vision-RTK 2 software released after 09.03.2023**
--   [5.0.0](https://github.com/fixposition/fixposition_driver/releases/tag/5.0.0)
-    -   Support both ROS1 and ROS2
-    -   Diverse bugfixes in code and documentation
-    -   **This is the last version compatible with Vision-RTK 2 software released before 17.01.2023**
--   [4.4.0](https://github.com/fixposition/fixposition_driver/releases/tag/4.4.0)
-    -   Pitch-Roll estimation from IMU data parsed from Vision-RTK 2, output available before fusion initialization.
-    -   OdometryConverter imeplemented as an example for wheelspeed data integration.
--   [4.3.0](https://github.com/fixposition/fixposition_driver/releases/tag/4.3.0)
-    -   Automatic reconnect after connection is lost
-    -   Adaption to latest Vision-RTK 2 software changes
--   [4.2.0](https://github.com/fixposition/fixposition_driver/releases/tag/4.2.0)
-    -   Euler Angle Yaw-Pitch-Roll in local ENU frame
-    -   Odometry in fixed ENU0 frame
--   [4.0.1](https://github.com/fixposition/fixposition_driver/releases/tag/4.0.1)
-    -   First public release
-    -   Code cleanup
-
-## Directory structure
+## How to use it
 
 The code is split in the following 3 parts:
 
@@ -44,11 +18,123 @@ The code is split in the following 3 parts:
 -   `fixposition_driver_ros1`: ROS1 driver node to subscribe and publish in the ROS1 framework. For more details and build instructions, see [here](fixposition_driver_ros1/README.md).
 -   `fixposition_driver_ros2`: ROS2 driver node to subscribe and publish in the ROS2 framework. For more details and build instructions, see [here](fixposition_driver_ros2/README.md).
 
+### ROS 1
+
+For more details and build instructions, see [here](fixposition_driver_ros1/README.md).
+
+#### Installation
+
+To install the node, extract / clone the code and `fixposition_gnss_tf` to your catkin workspace's `src` folder:
+
+```bash
+# The folder structure should look like this
+fp_public_ws
+├── src
+│   ├── fixposition_driver
+│   │   ├── fixposition_driver_lib
+│   │   ├── fixposition_driver_ros1
+│   │   ├── fixposition_driver_ros2 # will be ignore by catkin
+│   ├── fixposition_gnss_tf
+```
+
+**Add a file named 'CATKIN_IGNORE' to `fixposition_driver_ros2` folder.**
+
+make sure you have sourced the setup.bash from ros:
+
+`/opt/ros/{ROS_DISTRO}/setup.bash`, for example
+
+```
+source /opt/ros/melodic/setup.bash`
+```
+
+and build it with:
+
+`catkin build fixposition_driver_ros1`
+
+This will build the ROS1 driver node and all its dependencies.
+
+Then source your development environment:
+
+`source devel/setup.bash`
+
+#### Launch the Driver
+
+-   To launch the node in serial mode, run:
+
+    `roslaunch fixposition_driver_ros1 serial.launch`
+
+-   In TCP mode (Wi-Fi):
+
+    `roslaunch fixposition_driver_ros1 tcp.launch`
+
+-   In TCP mode (Ethernet):
+
+    `roslaunch fixposition_driver_ros1 tcp.launch`
+
+To change the settings of TCP (IP, Port) or Serial (Baudrate, Port) connections, check the `launch/tcp.yaml` and `launch/serial.yaml` files.
+
+### ROS 2
+
+For more details and build instructions, see [here](fixposition_driver_ros2/README.md).
+
+#### Installation
+
+To install the node, extract / clone the code and `fixposition_gnss_tf` to your catkin workspace's `src` folder:
+
+```bash
+# The folder structure should look like this
+fp_public_ws
+├── src
+│   ├── fixposition_driver
+│   │   ├── fixposition_driver_lib
+│   │   ├── fixposition_driver_ros1 # will be ignore by colcon when building for ROS2
+│   │   ├── fixposition_driver_ros2
+│   ├── fixposition_gnss_tf
+```
+
+**Add a file named 'COLCON_IGNORE' to `fixposition_driver_ros1` folder.**
+
+make sure you have sourced the setup.bash from ros:
+
+`/opt/ros/{ROS_DISTRO}/setup.bash`, for example
+
+```
+source /opt/ros/foxy/setup.bash
+```
+
+and build it with:
+
+`colcon build --packages-up-to fixposition_driver_ros2`
+
+This will build the ROS2 driver node and all its dependencies.
+
+Then source your environment after the build:
+
+`source install/setup.bash`
+
+#### Launch the Driver
+
+-   To launch the node in serial mode, run:
+
+    `ros2 launch fixposition_driver_ros2 serial.launch`
+
+-   In TCP mode (Wi-Fi):
+
+    `ros2 launch fixposition_driver_ros2 tcp.launch`
+
+-   In TCP mode (Ethernet):
+
+    `ros2 launch fixposition_driver_ros2 tcp.launch`
+
+To change the settings of TCP (IP, Port) or Serial (Baudrate, Port) connections, check the `launch/tcp.yaml` and `launch/serial.yaml` files.
+
 ## Output of the driver
 
 ### Messages and TF tree
 
 The output is published on the following:
+
+#### Vision-RTK2 Fusion
 
 -   From ODOMETRY, at the configured frequency
 
@@ -69,6 +155,19 @@ The output is published on the following:
     | ------------------------ | ----------------------- | ------------------------------ | ------------------------------ |
     | `/fixposition/navsatfix` | `sensor_msgs/NavSatFix` | as configured on web-interface | Latitude, Longitude and Height |
 
+#### Vision-RTK2 GNSS Antenna Positions
+
+**If GNSS Antenna positions are needed, please enable this on the sensor's configuration interface.**
+
+-   From NOV_B-BESTGNSSPOS, at the configured frequency, GNSS1 and GNSS2 raw antenna positions.
+
+    | Topic                | Message Type            | Frequency                      | Description                    |
+    | -------------------- | ----------------------- | ------------------------------ | ------------------------------ |
+    | `/fixposition/gnss1` | `sensor_msgs/NavSatFix` | as configured on web-interface | Latitude, Longitude and Height |
+    | `/fixposition/gnss2` | `sensor_msgs/NavSatFix` | as configured on web-interface | Latitude, Longitude and Height |
+
+#### Vision-RTK2 IMU data
+
 -   From RAWIMU, at 200Hz
 
     | Topic                 | Message Type      | Frequency | Description                                                                               |
@@ -81,13 +180,15 @@ The output is published on the following:
     | ---------------------- | ----------------- | --------- | -------------------------------------------------------------------------- |
     | `/fixposition/corrimu` | `sensor_msgs/Imu` | 200Hz     | Bias Corrected IMU acceleration and angular velocity data in FP_VRTK frame |
 
+#### Transforms
+
 -   TFs:
     | Frames | Topic | Message needed to be selected on web-interface | Frequency |
     | ---------------------------- | ------------ | ---------------------------------------------- | ------------------------------ |
     | `ECEF-->FP_POI` | `/tf` | `ODOMETRY` | as configured on web-interface |
     | `ECEF-->FP_ENU` | `/tf` | `ODOMETRY` | as configured on web-interface |
     | `ECEF-->FP_ENU0` | `/tf` | `ODOMETRY` | as configured on web-interface |
-    | `FP_POI-->FP_IMU_HORIZONTAL` | `/tf` | `ODOMETRY` | 200Hz |
+    | `FP_POI-->FP_IMUH` | `/tf` | `ODOMETRY` | 200Hz |
     | `FP_POI-->FP_VRTK` | `/tf_static` | `TF_POI_VRTK` | 1Hz |
     | `FP_VRTK-->FP_CAM` | `/tf_static` | `TF_VRTK_CAM` | 1Hz |
 
@@ -96,7 +197,7 @@ The output is published on the following:
     ```mermaid
     graph TD;
     ECEF-->FP_POI-->FP_VRTK-->FP_CAM
-    FP_POI-->FP_IMU_HORIZONTAL
+    FP_POI-->FP_IMUH
     ECEF-->FP_ENU
     ECEF-->FP_ENU0
     ```
@@ -113,7 +214,7 @@ _Please note that the corresponding messages also has to be selected on the Fixp
 | **FP_ENU**            | The **local** East-North-Up coordinate frame with the origin at the same location as FP_POI.                                                   |
 | **FP_ENU0**           | The **global fixed** East-North-Up coordinate frame with the origin at the first received ODOMETRY position. Needed for visualization in Rviz. |
 | **FP_CAM**            | The camera coordinate frame of the V-RTK.                                                                                                      |
-| **FP_IMU_HORIZONTAL** | A local horizontal frame with the origin at the same location as FP_POI. This frame is a rough estimate determined by the IMU alone.           |
+| **FP_IMUH** | A local horizontal frame with the origin at the same location as FP_POI. This frame is a rough estimate determined by the IMU alone.           |
 
 ## Input Wheelspeed through the driver
 
@@ -438,7 +539,7 @@ Message fields:
 
 # Fixposition Odometry Converter
 
-This is an extra node is provided to help with the integration of the wheel odometry on your vehicle. For details, see the subfolder [fixposition_odometry_converter](fixposition_odometry_converter/README.md).
+This is an extra node is provided to help with the integration of the wheel odometry on your vehicle. For details, see the subfolder [fixposition_odometry_converter](fixposition_odometry_converter/README.md) (ROS 1) and [fixposition_odometry_converter_ros2](fixposition_odometry_converter_ros2/README.md) (ROS 2). When building the ROS 1 version add a file named 'CATKIN_IGNORE' to the `fixposition_odometry_converter_ros2` folder.
 
 # License
 
