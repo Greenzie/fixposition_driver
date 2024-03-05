@@ -1,26 +1,23 @@
 version: 2.1
 
-workflows:
-  version: 2
-  pushbuild:
-    jobs:
-      - debian_build
-      - deploy:
-          filters:
-            branches:
-              only:
-                - noetic
-          requires:
-            - debian_build
+########################
+###### REFERENCES ######
+########################
 
-jobs:
-  debian_build:
-    docker:
-      - image: greenzie/debianize-experimental:focal-noetic
-        auth:
-          username: $DOCKERHUB_GREENZIE_USERNAME
-          password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: small
+debianize_executor: &debianize_executor
+  docker:
+    - image: greenzie/ci-debianize:focal-noetic
+      auth:
+        username: $DOCKERHUB_GREENZIE_USERNAME
+        password: $DOCKERHUB_GREENZIE_PASSWORD
+
+debianize_steps: &debianize_steps
+  # This 'when' is hack which allows us to concatenate list of steps
+  # We cannot combine lists, so this is the best solution we have
+  # See: https://circleci.com/docs/introduction-to-yaml-configurations/#anchors-and-aliases
+  when:
+    condition:
+      equal: [ "true", "true" ]
     steps:
       - checkout
       - run:
@@ -29,8 +26,37 @@ jobs:
       - run:
           name: "Package debs (debuild)"
           command: GITHUB_WORKSPACE="$PWD" greenzie-debianize all
+
+########################
+######### JOBS #########
+########################
+
+jobs:
+  debian_build:
+    <<: *debianize_executor
+    resource_class: small
+    steps:
+      - <<: *debianize_steps
       - store_artifacts:
           path: /debians
+      - run:
+          name: "Move debians"
+          command: install -D -t debians/artifacts/ debians/*
+      - persist_to_workspace:
+          root: /debians
+          paths:
+            - '*'
+
+  arm32_debian_build:
+    <<: *debianize_executor
+    resource_class: arm.medium
+    steps:
+      - <<: *debianize_steps
+      - store_artifacts:
+          path: /debians
+      - run:
+          name: "Move debians"
+          command: install -D -t debians/arm32_artifacts/ debians/*
       - persist_to_workspace:
           root: /debians
           paths:
@@ -52,4 +78,24 @@ jobs:
           environment:
             SERVER_HOSTNAME: aptly.greenzie.com
           command: |
-            aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+            aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians/artifacts"
+            aptly repo deploy -r arm32-experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians/arm32_artifacts"
+
+########################
+####### WORKFLOWS ######
+########################
+
+workflows:
+  version: 2
+  pushbuild:
+    jobs:
+      - debian_build
+      - arm32_debian_build
+      - deploy:
+          filters:
+            branches:
+              only:
+                - noetic
+          requires:
+            - debian_build
+            - arm32_debian_build
