@@ -59,7 +59,6 @@ FixpositionDriverNode::FixpositionDriverNode(std::shared_ptr<rclcpp::Node> node,
         params_.customer_input.speed_topic, 100,
         std::bind(&FixpositionDriverNode::WsCallback, this, std::placeholders::_1));
 
-    Connect();
     RegisterObservers();
 }
 
@@ -220,23 +219,23 @@ void FixpositionDriverNode::PublishNmea(NmeaMessage data) {
     if (data.checkEpoch()) {
         // Generate new message
         fixposition_driver_ros2::msg::NMEA msg;
-        
+
         // ROS Header
         msg.header.stamp = GpsTimeToMsgTime(data.gpzda.stamp);
         msg.header.frame_id = "LLH";
-        
+
         // Latitude [degrees]. Positive is north of equator; negative is south
         msg.latitude = data.gpgga.latitude;
-        
+
         // Longitude [degrees]. Positive is east of prime meridian; negative is west
         msg.longitude = data.gpgga.longitude;
-        
+
         // Altitude [m]. Positive is above the WGS 84 ellipsoid
         msg.altitude = data.gpgga.altitude;
 
         // Speed over ground [m/s]
         msg.speed = data.gprmc.speed;
-        
+
         // Course over ground [deg]
         msg.course = data.gprmc.course;
 
@@ -249,14 +248,20 @@ void FixpositionDriverNode::PublishNmea(NmeaMessage data) {
 
         // Positioning system mode indicator, R (RTK fixed), F (RTK float), A (no RTK), E, N
         msg.mode = data.gprmc.mode;
-        
+
         // Publish message
         nmea_pub_->publish(msg);
     }
 }
 
 void FixpositionDriverNode::WsCallback(const fixposition_driver_ros2::msg::Speed::ConstSharedPtr msg) {
-    FixpositionDriver::WsCallback(msg->speeds);
+    std::unordered_map<std::string, std::vector<std::pair<bool, int>>> measurements;
+    for (const auto &sensor : msg->sensors) {
+        measurements[sensor.location].push_back({sensor.vx_valid, sensor.vx});
+        measurements[sensor.location].push_back({sensor.vy_valid, sensor.vy});
+        measurements[sensor.location].push_back({sensor.vz_valid, sensor.vz});
+    }
+    FixpositionDriver::WsCallback(measurements);
 }
 
 void FixpositionDriverNode::BestGnssPosToPublishNavSatFix(const Oem7MessageHeaderMem* header,
