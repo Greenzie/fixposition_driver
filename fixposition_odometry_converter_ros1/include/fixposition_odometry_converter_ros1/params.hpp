@@ -2,11 +2,13 @@
  *  @file
  *  @brief Parameters for the odometry converter
  *
+ * \verbatim
  *  ___    ___
  *  \  \  /  /
  *   \  \/  /   Fixposition AG
  *   /  /\  \   All right reserved.
  *  /__/  \__\
+ * \endverbatim
  *
  */
 
@@ -29,7 +31,9 @@ struct OdomInputParams {
     std::string input_topic;
     std::string fixposition_speed_topic;
     int multiplicative_factor;
-    bool use_angular;
+    bool use_x;
+    bool use_y;
+    bool use_z;
     /**
      * @brief Load all parameters from ROS parameter server
      *

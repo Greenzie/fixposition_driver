@@ -2,11 +2,13 @@
  *  @file
  *  @brief Declaration of OdomConverter class
  *
+ * \verbatim
  *  ___    ___
  *  \  \  /  /
  *   \  \/  /   Fixposition AG
  *   /  /\  \   All right reserved.
  *  /__/  \__\
+ * \endverbatim
  *
  */
 
@@ -28,7 +30,7 @@
 /* PACKAGE */
 #include <fixposition_driver_ros1/Speed.h>
 
-#include <fixposition_odometry_converter/params.hpp>
+#include <fixposition_odometry_converter_ros1/params.hpp>
 
 namespace fixposition {
 
@@ -54,11 +56,11 @@ class OdomConverter {
     void Subscribe();
 
     /**
-     * @brief Converts and publishes the speed to an integer value in [mm/s]
+     * @brief Converts the speed(s) to an integer value in [mm/s] and publishes it
      *
-     * @param speed
+     * @param speeds vector containing x, y, and z speeds and their validity flag
      */
-    void ConvertAndPublish(const double speed, const double angular, bool use_angular = false);
+    void ConvertAndPublish(const std::vector<std::pair<bool, double>> speeds);
 
    private:
     /**

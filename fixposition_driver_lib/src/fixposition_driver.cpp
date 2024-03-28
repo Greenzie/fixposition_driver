@@ -2,11 +2,13 @@
  *  @file
  *  @brief Implementation of FixpositionDriver class
  *
+ * \verbatim
  *  ___    ___
  *  \  \  /  /
  *   \  \/  /   Fixposition AG
  *   /  /\  \   All right reserved.
  *  /__/  \__\
+ * \endverbatim
  *
  */
 
@@ -15,36 +17,49 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <stdexcept>
+
 /* PACKAGE */
+#include <fixposition_driver_lib/converter/gpgga.hpp>
+#include <fixposition_driver_lib/converter/gprmc.hpp>
+#include <fixposition_driver_lib/converter/gpzda.hpp>
 #include <fixposition_driver_lib/converter/imu.hpp>
 #include <fixposition_driver_lib/converter/llh.hpp>
 #include <fixposition_driver_lib/converter/odometry.hpp>
 #include <fixposition_driver_lib/converter/tf.hpp>
 #include <fixposition_driver_lib/fixposition_driver.hpp>
 #include <fixposition_driver_lib/helper.hpp>
+#include <fixposition_driver_lib/parser.hpp>
+
+#ifndef B460800
+#define B460800 460800
+#endif
+#ifndef B500000
+#define B500000 500000
+#endif
+#ifndef B921600
+#define B921600 921600
+#endif
+#ifndef B1000000
+#define B1000000 1000000
+#endif
 
 namespace fixposition {
 FixpositionDriver::FixpositionDriver(const FixpositionDriverParams& params) : params_(params) {
-    Connect();
-
-    // static headers
-    rawdmi_.head1 = 0xaa;
-    rawdmi_.head2 = 0x44;
-    rawdmi_.head3 = 0x13;
-    rawdmi_.payloadLen = 20;
-    rawdmi_.msgId = 2269;
-    // these to be filled by each rosmsg
-    rawdmi_.wno = 0;
-    rawdmi_.tow = 0;
-    rawdmi_.dmi1 = 0;
-    rawdmi_.dmi2 = 0;
-    rawdmi_.dmi3 = 0;
-    rawdmi_.dmi4 = 0;
-    rawdmi_.mask = 0;
+    // connect to the sensor
+    if (!Connect()) {
+        if (params_.fp_output.type == INPUT_TYPE::TCP) {
+            throw std::runtime_error("Unable to connect to the sensor via TCP");
+        } else if (params_.fp_output.type == INPUT_TYPE::SERIAL) {
+            throw std::runtime_error("Unable to connect to the sensor via Serial");
+        } else {
+            throw std::runtime_error("Unable to connect to the sensor, verify configuration");
+        }
+    }
 
     // initialize converters
     if (!InitializeConverters()) {
-        std::cerr << "Could not initialize output converter!\n";
+        throw std::runtime_error("Could not initialize output converter!");
     }
 }
 
@@ -71,55 +86,126 @@ bool FixpositionDriver::Connect() {
     }
 }
 
-void FixpositionDriver::WsCallback(const std::vector<int>& speeds) {
-    if (speeds.size() == 1) {
-        rawdmi_.dmi1 = speeds[0];
-        rawdmi_.mask = (1 << 0) | (0 << 1) | (0 << 2) | (0 << 3);
-    } else if (speeds.size() == 2) {
-        rawdmi_.dmi1 = speeds[0];
-        rawdmi_.dmi2 = speeds[1];
-        rawdmi_.mask = (1 << 0) | (1 << 1) | (0 << 2) | (0 << 3) | (1 << 11);
-    } else if (speeds.size() == 4) {
-        rawdmi_.dmi1 = speeds[0];
-        rawdmi_.dmi2 = speeds[1];
-        rawdmi_.dmi3 = speeds[2];
-        rawdmi_.dmi4 = speeds[3];
-        rawdmi_.mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3);
-    } else {
+void FixpositionDriver::WsCallback(
+    const std::unordered_map<std::string, std::vector<std::pair<bool, int>>>& sensors_meas) {
+    std::vector<FpbMeasurementsMeas> sensor_measurements;
+    for (const auto& sensor : sensors_meas) {
+        const FpbMeasurementsMeasLoc location = WsMeasStringToLoc(sensor.first);
+        if (location == MEASLOC_UNSPECIFIED) {
+            std::cerr << "Unknown measurement type will not be processed!\n";
+            continue;
+        }
+        FpbMeasurementsMeas fpb_meas;
+        if (FillWsSensorMeas(sensor.second, location, fpb_meas)) {
+            sensor_measurements.push_back(fpb_meas);
+        }
+    }
+
+    const size_t num_meas = sensor_measurements.size();
+    if (num_meas == 0 || num_meas > 10) {
+        std::cerr << "Number of wheel speed sensors is invalid.\n";
         return;
     }
 
-    // Calculate CRC
-    const uint32_t checksum = crc32((const uint8_t*)&rawdmi_, sizeof(rawdmi_));
+    FpbHeader header;
+    header.sync1 = 0x66;
+    header.sync2 = 0x21;
+    header.msg_id = 2001;
+    header.payload_size = FP_B_MEASUREMENTS_HEAD_SIZE + (FP_B_MEASUREMENTS_BODY_SIZE * num_meas);
+    header.time = 0;
 
-    // Compose entire message
-    uint8_t message[sizeof(rawdmi_) + sizeof(checksum)];
-    memcpy(&message[0], &rawdmi_, sizeof(rawdmi_));
-    memcpy(&message[sizeof(rawdmi_)], &checksum, sizeof(checksum));
+    FpbMeasurementsHeader meas_header;
+    meas_header.version = 1;
+    meas_header.num_meas = num_meas;
+    std::fill(&meas_header.reserved0[0], &meas_header.reserved0[6], 0);
 
-    send(this->client_fd_, &message[0], sizeof(message), MSG_DONTWAIT);
+    const int msg_sz =
+        FP_B_HEAD_SIZE + FP_B_MEASUREMENTS_HEAD_SIZE + (FP_B_MEASUREMENTS_BODY_SIZE * num_meas) + FP_B_CRC_SIZE;
+    std::vector<uint8_t> message(msg_sz);
+
+    memcpy(&message[0], (uint8_t*)&header, sizeof(header));
+    memcpy(&message[FP_B_HEAD_SIZE], (uint8_t*)&meas_header, sizeof(meas_header));
+    for (size_t i = 0; i < num_meas; i++) {
+        memcpy(&message[FP_B_HEAD_SIZE + FP_B_MEASUREMENTS_HEAD_SIZE + (FP_B_MEASUREMENTS_BODY_SIZE * i)],
+               (uint8_t*)&sensor_measurements[i], sizeof(sensor_measurements[i]));
+    }
+    const uint32_t crc = Crc32fpb(
+        message.data(), FP_B_HEAD_SIZE + FP_B_MEASUREMENTS_HEAD_SIZE + (FP_B_MEASUREMENTS_BODY_SIZE * num_meas));
+    memcpy(&message[FP_B_HEAD_SIZE + FP_B_MEASUREMENTS_HEAD_SIZE + (FP_B_MEASUREMENTS_BODY_SIZE * num_meas)], &crc,
+           sizeof(crc));
+
+    switch (params_.fp_output.type) {
+        case INPUT_TYPE::TCP:
+            send(this->client_fd_, &message[0], message.size(), MSG_DONTWAIT);
+            break;
+        case INPUT_TYPE::SERIAL:
+            (void)!write(this->client_fd_, &message[0], message.size());
+            // Suppress warning - https://stackoverflow.com/a/64407070/7944565
+            break;
+        default:
+            std::cerr << "Unknown connection type!\n";
+            break;
+    }
+}
+
+bool FixpositionDriver::FillWsSensorMeas(const std::vector<std::pair<bool, int>>& meas_vec,
+                                         const FpbMeasurementsMeasLoc meas_loc, FpbMeasurementsMeas& meas_fpb) {
+    const size_t num_axis = meas_vec.size();
+    if (num_axis != 3) {
+        std::cerr << "Wheelspeed sensor has an invalid number of measurements.\n";
+        return false;
+    }
+    meas_fpb.meas_type = MEASTYPE_VELOCITY;
+    meas_fpb.meas_loc = meas_loc;
+    std::fill(&meas_fpb.reserved1[0], &meas_fpb.reserved1[4], 0);
+    // In the current setup, the sensor will handle the timestamping as time of arrival.
+    meas_fpb.timestamp_type = TIME_TOA;
+    meas_fpb.gps_wno = 0;
+    meas_fpb.gps_tow = 0;
+    meas_fpb.meas_x_valid = meas_vec[0].first;
+    meas_fpb.meas_x = meas_vec[0].second;
+    meas_fpb.meas_y_valid = meas_vec[1].first;
+    meas_fpb.meas_y = meas_vec[1].second;
+    meas_fpb.meas_z_valid = meas_vec[2].first;
+    meas_fpb.meas_z = meas_vec[2].second;
+    return true;
+}
+
+FpbMeasurementsMeasLoc FixpositionDriver::WsMeasStringToLoc(const std::string& meas_loc) {
+    if (meas_loc == "RC") return MEASLOC_RC;
+    if (meas_loc == "FR") return MEASLOC_FR;
+    if (meas_loc == "FL") return MEASLOC_FL;
+    if (meas_loc == "RR") return MEASLOC_RR;
+    if (meas_loc == "RL") return MEASLOC_RL;
+    return MEASLOC_UNSPECIFIED;
 }
 
 bool FixpositionDriver::InitializeConverters() {
     for (const auto& format : params_.fp_output.formats) {
         if (format == "ODOMETRY") {
-            converters_["ODOMETRY"] = std::unique_ptr<OdometryConverter>(new OdometryConverter());
-            converters_["TF"] = std::unique_ptr<TfConverter>(new TfConverter());
+            a_converters_["ODOMETRY"] = std::unique_ptr<OdometryConverter>(new OdometryConverter());
+            a_converters_["TF"] = std::unique_ptr<TfConverter>(new TfConverter());
         } else if (format == "LLH") {
-            converters_["LLH"] = std::unique_ptr<LlhConverter>(new LlhConverter());
+            a_converters_["LLH"] = std::unique_ptr<LlhConverter>(new LlhConverter());
         } else if (format == "RAWIMU") {
-            converters_["RAWIMU"] = std::unique_ptr<ImuConverter>(new ImuConverter(false));
+            a_converters_["RAWIMU"] = std::unique_ptr<ImuConverter>(new ImuConverter(false));
         } else if (format == "CORRIMU") {
-            converters_["CORRIMU"] = std::unique_ptr<ImuConverter>(new ImuConverter(true));
+            a_converters_["CORRIMU"] = std::unique_ptr<ImuConverter>(new ImuConverter(true));
+        } else if (format == "GPGGA") {
+            a_converters_["GPGGA"] = std::unique_ptr<GpggaConverter>(new GpggaConverter());
+        } else if (format == "GPZDA") {
+            a_converters_["GPZDA"] = std::unique_ptr<GpzdaConverter>(new GpzdaConverter());
+        } else if (format == "GPRMC") {
+            a_converters_["GPRMC"] = std::unique_ptr<GprmcConverter>(new GprmcConverter());
         } else if (format == "TF") {
-            if (converters_.find("TF") == converters_.end()) {
-                converters_["TF"] = std::unique_ptr<TfConverter>(new TfConverter());
+            if (a_converters_.find("TF") == a_converters_.end()) {
+                a_converters_["TF"] = std::unique_ptr<TfConverter>(new TfConverter());
             }
         } else {
             std::cerr << "Unknown input format: " << format << "\n";
         }
     }
-    return !converters_.empty();
+    return !a_converters_.empty();
 }
 bool FixpositionDriver::RunOnce() {
     if ((client_fd_ > 0) && (connection_status_ == 0) && ReadAndPublish()) {
@@ -157,49 +243,95 @@ bool FixpositionDriver::ReadAndPublish() {
         return false;
     }
 
-    // find start of a NMEA style message
-    char* start = (char*)memchr(readBuf, '$', rv);
-    while (start != NULL) {
-        // check if it is NMEA with correct checksum
-        auto nmea_size = IsNmeaMessage(start, rv - (start - readBuf));
-
-        // convert the message into ros messages
-        if (nmea_size > 0) {
-            std::string msg(start, nmea_size);
-            ConvertAndPublish(msg);
-
-            // move to next $ for next message
-            start = (char*)memchr(start + 1, '$', rv);
-        } else {
+    ssize_t start_id = 0;
+    while (start_id < rv) {
+        int msg_size = 0;
+        // Nov B
+        msg_size = IsNovMessage((uint8_t*)&readBuf[start_id], rv - start_id);
+        if (msg_size > 0) {
+            NovConvertAndPublish((uint8_t*)&readBuf[start_id], msg_size);
+            start_id += msg_size;
+            continue;
+        }
+        if (msg_size == 0) {
+            // do nothing
+        }
+        if (msg_size < 0) {
             break;
         }
+
+        // Nmea (incl. FP_A)
+        msg_size = IsNmeaMessage(&readBuf[start_id], rv - start_id);
+        if (msg_size > 0) {
+            // NovConvertAndPublish(start, msg_size);
+            std::string msg(&readBuf[start_id], msg_size);
+            NmeaConvertAndPublish(msg);
+            start_id += msg_size;
+            continue;
+        }
+        if (msg_size == 0) {
+            // do nothing
+        }
+        if (msg_size < 0) {
+            break;
+        }
+
+        // No Match, increment by 1
+        ++start_id;
     }
 
     return true;
 }
 
-void FixpositionDriver::ConvertAndPublish(const std::string& msg) {
+void FixpositionDriver::NmeaConvertAndPublish(const std::string& msg) {
     // split the msg into tokens, removing the *XX checksum
     std::vector<std::string> tokens;
     std::size_t star_pos = msg.find_last_of("*");
     SplitMessage(tokens, msg.substr(1, star_pos - 1), ",");
 
     // if it doesn't start with FP then do nothing
-    if (tokens.at(0) != "FP") {
+    if ((tokens.at(0) != "FP") && (tokens.at(0) != "GPGGA") && (tokens.at(0) != "GPZDA") && (tokens.at(0) != "GPRMC")) {
         return;
     }
 
     // Get the header of the sentence
-    const std::string header = tokens.at(1);
+    std::string _header;
+    if (tokens.at(0) == "GPGGA") {
+        _header = "GPGGA";
+    } else if (tokens.at(0) == "GPZDA") {
+        _header = "GPZDA";
+    } else if (tokens.at(0) == "GPRMC") {
+        _header = "GPRMC";
+    } else {
+        _header = tokens.at(1);
+    }
+    const std::string header = _header;
 
     // If we have a converter available, convert to ros. Currently supported are "FP", "LLH", "TF", "RAWIMU", "CORRIMU"
-    if (converters_[header] != nullptr) {
-        converters_[header]->ConvertTokens(tokens);
+    if (a_converters_[header] != nullptr) {
+        a_converters_[header]->ConvertTokens(tokens);
     }
 }
 
+void FixpositionDriver::NovConvertAndPublish(const uint8_t* msg, int size) {
+    auto* header = reinterpret_cast<const Oem7MessageHeaderMem*>(msg);
+    const auto msg_id = header->message_id;
+
+    if (msg_id == static_cast<uint16_t>(MessageId::BESTGNSSPOS)) {
+        for (auto& ob : bestgnsspos_obs_) {
+            auto* payload = reinterpret_cast<const BESTGNSSPOSMem*>(msg + sizeof(Oem7MessageHeaderMem));
+            ob(header, payload);
+        }
+    }
+    // TODO add more msg types
+}
+
 bool FixpositionDriver::CreateTCPSocket() {
-    struct sockaddr_in server_address;
+    if (client_fd_ != -1) {
+        std::cerr << "TCP connection already exists.\n";
+        return true;
+    }
+
     client_fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
     if (client_fd_ < 0) {
@@ -209,6 +341,7 @@ bool FixpositionDriver::CreateTCPSocket() {
         std::cout << "Client created.\n";
     }
 
+    struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(std::stoi(params_.fp_output.port));
@@ -224,6 +357,11 @@ bool FixpositionDriver::CreateTCPSocket() {
 }
 
 bool FixpositionDriver::CreateSerialConnection() {
+    if (client_fd_ != -1) {
+        std::cerr << "Serial connection already exists.\n";
+        return true;
+    }
+
     client_fd_ = open(params_.fp_output.port.c_str(), O_RDWR | O_NOCTTY);
 
     struct termios options;
