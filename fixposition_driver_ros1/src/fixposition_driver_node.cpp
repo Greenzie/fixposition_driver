@@ -160,7 +160,10 @@ void FixpositionDriverNode::RegisterObservers() {
                     imu_ypr.header.frame_id = "FP_POI";
                     tf::vectorEigenToMsg(imu_ypr_eigen, imu_ypr.vector);
                     eul_imu_pub_.publish(imu_ypr);
-
+                } else if (tf.header.frame_id == "FP_ENU0") {
+                    if (!isnan(tf.transform.rotation.x) && !isnan(tf.transform.rotation.y) && !isnan(tf.transform.rotation.z) && !isnan(tf.transform.rotation.w)) {
+                        static_br_.sendTransform(tf);
+                    }
                 } else {
                     static_br_.sendTransform(tf);
                 }
