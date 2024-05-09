@@ -160,7 +160,7 @@ void FixpositionDriverNode::RegisterObservers() {
                     imu_ypr.header.frame_id = "FP_POI";
                     tf::vectorEigenToMsg(imu_ypr_eigen, imu_ypr.vector);
                     eul_imu_pub_.publish(imu_ypr);
-                    
+
                 } else {
                     static_br_.sendTransform(tf);
                 }
