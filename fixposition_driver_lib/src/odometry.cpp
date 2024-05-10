@@ -137,8 +137,9 @@ void OdometryConverter::ConvertTokens(const std::vector<std::string>& tokens) {
             q_ecef_enu0_ = Eigen::Quaterniond(gnss_tf::RotEnuEcef(t_ecef_body).transpose());
             msgs_.tf_ecef_enu0.translation = t_ecef_enu0_;
             msgs_.tf_ecef_enu0.rotation = q_ecef_enu0_;
-            bool tf_is_nan = isnan(msgs_.tf_ecef_enu0.rotation.x()) || isnan(msgs_.tf_ecef_enu0.rotation.y()) || isnan(msgs_.tf_ecef_enu0.rotation.z()) || isnan(msgs_.tf_ecef_enu0.rotation.w());
-            if (!tf_is_nan) {
+            bool tf_rot_is_nan = isnan(msgs_.tf_ecef_enu0.rotation.x()) || isnan(msgs_.tf_ecef_enu0.rotation.y()) || isnan(msgs_.tf_ecef_enu0.rotation.z()) || isnan(msgs_.tf_ecef_enu0.rotation.w());
+            bool tf_trans_is_nan = isnan(msgs_.tf_ecef_enu0.translation.x()) || isnan(msgs_.tf_ecef_enu0.translation.y()) || isnan(msgs_.tf_ecef_enu0.translation.z());
+            if (!tf_rot_is_nan && !tf_trans_is_nan) {
                 tf_ecef_enu0_set_ = true;
             }
         
