@@ -29,7 +29,7 @@ workflows:
               only:
                 - noetic
           requires:
-            - arm64_debian_build
+            - arm_debian_build
       - deploy:
           name: "deploy to bobcat.greenzie.com"
           server_hostname: bobcat-aptly.greenzie.com
