@@ -15,11 +15,30 @@ workflows:
           platform: arm64
 
       - deploy:
+          name: "deploy amd64 to greenzie.com"
           filters:
             branches:
               only:
                 - noetic
           requires:
+            - amd_debian_build
+      - deploy:
+          name: "deploy arm64 to greenzie.com"
+          filters:
+            branches:
+              only:
+                - noetic
+          requires:
+            - arm64_debian_build
+      - deploy:
+          name: "deploy to bobcat.greenzie.com"
+          server_hostname: bobcat-aptly.greenzie.com
+          filters:
+            branches:
+              only:
+                - noetic
+          requires:
+            - arm_debian_build
             - amd_debian_build
 
 executors:
@@ -30,6 +49,7 @@ executors:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
     resource_class: arm.medium
+
   docker_amd64:
     docker:
       - image: greenzie/ci-debianize:focal-noetic
@@ -72,13 +92,27 @@ jobs:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
     resource_class: small
+    parameters:
+      server_hostname:
+        type: string
+        default: aptly.greenzie.com
+      architecture:
+        type: string
+        default: ""
     steps:
       - add_ssh_keys
       - attach_workspace:
           at: /debians
       - run:
-          name: Deploy to aptly.greenzie.com
+          name: Deploy to << parameters.server_hostname >>
           environment:
-            SERVER_HOSTNAME: aptly.greenzie.com
+            SERVER_HOSTNAME: << parameters.server_hostname >>
+            ARCHITECTURE: << parameters.architecture >>
           command: |
-            aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+            ls-lah /debians/
+            if [ -z "${ARCHITECTURE}" ]; then
+              echo "No architecture specified, deploying all"
+              greenzie-aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+            else
+              greenzie-aptly repo deploy -a "${ARCHITECTURE}" -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+            fi
