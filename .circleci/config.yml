@@ -56,7 +56,7 @@ jobs:
       - run:
           name: "Package debs (debuild)"
           environment:
-            - TARGETPLATFORM = << parameters.platform >>
+            - TARGETPLATFORM: << parameters.platform >>
           command: GITHUB_WORKSPACE="$PWD" greenzie-debianize all
       - store_artifacts:
           path: /debians
