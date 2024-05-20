@@ -6,15 +6,13 @@ workflows:
     jobs:
       - debian_build:
           name: "amd_debian_build"
-          parameters:
-            resource_class: small
-            platform: amd64
+          resource_class: small
+          platform: amd64
 
       - debian_build:
           name: "arm_debian_build"
-          parameters:
-            resource_class: arm.medium
-            platform: arm64
+          resource_class: arm.medium
+          platform: arm64
 
       - deploy:
           filters:
