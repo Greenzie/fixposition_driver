@@ -10,7 +10,7 @@ workflows:
           platform: amd64
 
       - debian_build:
-          name: "arm_debian_build"
+          name: "arm64_debian_build"
           resource_class: 'arm.medium'
           platform: arm64
 
