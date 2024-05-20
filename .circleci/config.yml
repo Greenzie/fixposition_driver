@@ -6,12 +6,12 @@ workflows:
     jobs:
       - debian_build:
           name: "amd_debian_build"
-          resource_class: small
+          resource_class: 'small'
           platform: amd64
 
       - debian_build:
           name: "arm_debian_build"
-          resource_class: arm.medium
+          resource_class: 'arm.medium'
           platform: arm64
 
       - deploy:
@@ -22,14 +22,25 @@ workflows:
           requires:
             - amd_debian_build
 
-jobs:
-  debian_build:
+executors:
+  docker_arm64:
     docker:
       - image: greenzie/debianize-experimental:focal-noetic
         auth:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: << parameters.resource_class >>
+    resource_class: arm.medium
+  docker_amd64:
+    docker:
+      - image: greenzie/debianize-experimental:focal-noetic
+        auth:
+          username: $DOCKERHUB_GREENZIE_USERNAME
+          password: $DOCKERHUB_GREENZIE_PASSWORD
+    resource_class: small
+
+jobs:
+  debian_build:
+    executor: docker_<< parameters.platform >>
     parameters:
       resource_class:
         type: string
