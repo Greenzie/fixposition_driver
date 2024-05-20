@@ -25,14 +25,14 @@ workflows:
 executors:
   docker_arm64:
     docker:
-      - image: greenzie/debianize-experimental:focal-noetic
+      - image: greenzie/ci-debianize:focal-noetic
         auth:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
     resource_class: arm.medium
   docker_amd64:
     docker:
-      - image: greenzie/debianize-experimental:focal-noetic
+      - image: greenzie/ci-debianize:focal-noetic
         auth:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
