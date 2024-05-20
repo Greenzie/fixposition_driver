@@ -5,18 +5,24 @@ workflows:
   pushbuild:
     jobs:
       - debian_build:
-          matrix:
-            parameters:
-              platform: [ small, arm.medium ]
+          name: "amd_debian_build"
           parameters:
             resource_class: small
+            platform: amd64
+
+      - debian_build:
+          name: "arm_debian_build"
+          parameters:
+            resource_class: arm.medium
+            platform: arm64
+
       - deploy:
           filters:
             branches:
               only:
                 - noetic
           requires:
-            - debian_build
+            - amd_debian_build
 
 jobs:
   debian_build:
@@ -30,6 +36,9 @@ jobs:
       resource_class:
         type: string
         default: small
+      platform:
+        type: string
+        default: amd64
     steps:
       - checkout
       - run:
