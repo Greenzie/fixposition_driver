@@ -4,7 +4,12 @@ workflows:
   version: 2
   pushbuild:
     jobs:
-      - debian_build
+      - debian_build:
+          matrix:
+            parameters:
+              platform: [ small, arm.medium ]
+          parameters:
+            resource_class: small
       - deploy:
           filters:
             branches:
@@ -20,7 +25,11 @@ jobs:
         auth:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: small
+    resource_class: << parameters.resource_class >>
+    parameters:
+      resource_class:
+        type: string
+        default: small
     steps:
       - checkout
       - run:
@@ -28,6 +37,8 @@ jobs:
           command: greenzie-release changelog -r "${ROS_DISTRO}"
       - run:
           name: "Package debs (debuild)"
+          environment:
+            - TARGETPLATFORM = << parameters.platform >>
           command: GITHUB_WORKSPACE="$PWD" greenzie-debianize all
       - store_artifacts:
           path: /debians
