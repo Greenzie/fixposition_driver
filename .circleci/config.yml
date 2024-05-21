@@ -41,8 +41,12 @@ workflows:
             - arm64_debian_build
             - amd_debian_build
 
+#########################
+###### EXECUTORS ########
+#########################
+
 executors:
-  docker_arm64:
+  debianize_arm64:
     docker:
       - image: greenzie/ci-debianize:focal-noetic
         auth:
@@ -50,7 +54,7 @@ executors:
           password: $DOCKERHUB_GREENZIE_PASSWORD
     resource_class: arm.medium
 
-  docker_amd64:
+  debianize_amd64:
     docker:
       - image: greenzie/ci-debianize:focal-noetic
         auth:
@@ -58,9 +62,19 @@ executors:
           password: $DOCKERHUB_GREENZIE_PASSWORD
     resource_class: small
 
+  aptly:
+    docker:
+      - image: greenzie/aptly:3.19.1-focal-noetic
+        auth:
+          username: $DOCKERHUB_GREENZIE_USERNAME
+          password: $DOCKERHUB_GREENZIE_PASSWORD
+    resource_class: small
+
+
+
 jobs:
   debian_build:
-    executor: docker_<< parameters.platform >>
+    executor: debianize_<< parameters.platform >>
     parameters:
       resource_class:
         type: string
@@ -86,12 +100,7 @@ jobs:
             - '*'
 
   deploy:
-    docker:
-      - image: greenzie/aptly:3.19.1-focal-noetic
-        auth:
-          username: $DOCKERHUB_GREENZIE_USERNAME
-          password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: small
+    executor: aptly
     parameters:
       server_hostname:
         type: string
@@ -112,7 +121,7 @@ jobs:
             ls -lah /debians/
             if [ -z "${ARCHITECTURE}" ]; then
               echo "No architecture specified, deploying all"
-              greenzie-aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+              aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
             else
-              greenzie-aptly repo deploy -a "${ARCHITECTURE}" -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+              aptly repo deploy -a "${ARCHITECTURE}" -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
             fi
