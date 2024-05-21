@@ -16,10 +16,10 @@ workflows:
 
       - deploy:
           name: "deploy_amd64_greenzie"
-          filters:
-            branches:
-              only:
-                - noetic
+#          filters:
+#            branches:
+#              only:
+#                - noetic
           requires:
             - amd_debian_build
       - deploy:
