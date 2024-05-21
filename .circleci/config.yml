@@ -109,7 +109,7 @@ jobs:
             SERVER_HOSTNAME: << parameters.server_hostname >>
             ARCHITECTURE: << parameters.architecture >>
           command: |
-            ls-lah /debians/
+            ls -lah /debians/
             if [ -z "${ARCHITECTURE}" ]; then
               echo "No architecture specified, deploying all"
               greenzie-aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
