@@ -121,5 +121,5 @@ jobs:
           command: |
             ls -lah /debians/
             # uses the parameter expansion syntax ${parameter:+word}
-            $REPO="${ARCHITECTURE:+$ARCHITECTURE-}experimental"
+            REPO="${ARCHITECTURE:+$ARCHITECTURE-}experimental"
             aptly repo deploy -r "${REPO}" -n "${CIRCLE_BUILD_NUM}" -p "/debians"
