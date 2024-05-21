@@ -16,27 +16,27 @@ workflows:
 
       - deploy:
           name: "deploy_amd64_greenzie"
+          filters:
+            branches:
+              only:
+                - noetic
+          requires:
+            - amd_debian_build
+      - deploy:
+          name: "deploy_arm64_greenzie"
 #          filters:
 #            branches:
 #              only:
 #                - noetic
           requires:
-            - amd_debian_build
-      - deploy:
-          name: "deploy_arm64_greenzie"
-          filters:
-            branches:
-              only:
-                - noetic
-          requires:
             - arm64_debian_build
       - deploy:
           name: "deploy_all_bobcat"
           server_hostname: bobcat-aptly.greenzie.com
-          filters:
-            branches:
-              only:
-                - noetic
+#          filters:
+#            branches:
+#              only:
+#                - noetic
           requires:
             - arm64_debian_build
             - amd_debian_build
