@@ -120,9 +120,6 @@ jobs:
             ARCHITECTURE: << parameters.architecture >>
           command: |
             ls -lah /debians/
-            if [ -z "${ARCHITECTURE}" ]; then
-              echo "No architecture specified, deploying all"
-              aptly repo deploy -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
-            else
-              aptly repo deploy -a "${ARCHITECTURE}" -r experimental -n "${CIRCLE_BUILD_NUM}" -p "/debians"
-            fi
+            # uses the parameter expansion syntax ${parameter:+word}
+            $REPO="${ARCHITECTURE:+$ARCHITECTURE-}experimental"
+            aptly repo deploy -r "${REPO}" -n "${CIRCLE_BUILD_NUM}" -p "/debians"
