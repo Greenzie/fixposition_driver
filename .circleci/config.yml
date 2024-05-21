@@ -65,7 +65,7 @@ executors:
 
   aptly:
     docker:
-      - image: greenzie/aptly:3.19.1-focal-noetic
+      - image: greenzie/aptly:2024-04-26-3.19.1-focal-noetic
         auth:
           username: $DOCKERHUB_GREENZIE_USERNAME
           password: $DOCKERHUB_GREENZIE_PASSWORD
