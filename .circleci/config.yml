@@ -33,7 +33,7 @@ workflows:
             - arm64_debian_build
       - deploy:
           name: "deploy_all_bobcat"
-          server_hostname: bobcat-aptly.greenzie.com
+          server_hostname: bobcat
           filters:
             branches:
               only:
@@ -123,6 +123,10 @@ jobs:
             ARCHITECTURE: << parameters.architecture >>
           command: |
             ls -lah /debians/
+            # if the SERVER_HOSTNAME is just bobcat, we replace this with the ENV var BOBCAT_APTLY_SERVER
+            if [ "${SERVER_HOSTNAME}" == "bobcat" ]; then
+              SERVER_HOSTNAME="${BOBCAT_APTLY_SERVER}"
+            fi
             # uses the parameter expansion syntax ${parameter:+word}
             REPO="${ARCHITECTURE:+$ARCHITECTURE-}experimental"
             aptly repo deploy -r "${REPO}" -n "${CIRCLE_BUILD_NUM}" -p "/debians"
