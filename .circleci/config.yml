@@ -3,6 +3,11 @@ version: 2.1
 orbs:
   greenzie: greenzie/build_and_publish_debs@0.0.2
 
+parameters:
+  manual-bobcat-deploy:
+    type: boolean
+    default: false
+
 workflows:
   version: 2
   pushbuild:
@@ -48,92 +53,16 @@ workflows:
           requires:
             - arm64_debian_build
             - amd_debian_build
-
-#########################
-###### EXECUTORS ########
-#########################
-
-executors:
-  debianize_arm64:
-    docker:
-      - image: greenzie/ci-debianize:focal-noetic
-        auth:
-          username: $DOCKERHUB_GREENZIE_USERNAME
-          password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: arm.medium
-
-  debianize_amd64:
-    docker:
-      - image: greenzie/ci-debianize:focal-noetic
-        auth:
-          username: $DOCKERHUB_GREENZIE_USERNAME
-          password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: small
-
-  aptly:
-    docker:
-      # Previous versions of the image does not have the arm64-experimental as a valid repo
-      - image: greenzie/aptly:2024-04-26-3.19.1-focal-noetic
-        auth:
-          username: $DOCKERHUB_GREENZIE_USERNAME
-          password: $DOCKERHUB_GREENZIE_PASSWORD
-    resource_class: small
-
-#########################
-######### JOBS ##########
-#########################
-
-jobs:
-  debian_build:
-    executor: debianize_<< parameters.platform >>
-    parameters:
-      resource_class:
-        type: string
-        default: small
-      platform:
-        type: string
-        default: amd64
-    steps:
-      - checkout
-      - run:
-          name: "Generate Changelogs"
-          command: greenzie-release changelog -r "${ROS_DISTRO}"
-      - run:
-          name: "Package debs (debuild)"
-          environment:
-            - TARGETPLATFORM: << parameters.platform >>
-          command: GITHUB_WORKSPACE="$PWD" greenzie-debianize all
-      - store_artifacts:
-          path: /debians
-      - persist_to_workspace:
-          root: /debians
-          paths:
-            - '*'
-
-  deploy:
-    executor: aptly
-    parameters:
-      server_hostname:
-        type: string
-        default: aptly.greenzie.com
-      architecture:
-        type: string
-        default: ""
-    steps:
-      - add_ssh_keys
-      - attach_workspace:
-          at: /debians
-      - run:
-          name: Deploy to << parameters.server_hostname >>
-          environment:
-            SERVER_HOSTNAME: << parameters.server_hostname >>
-            ARCHITECTURE: << parameters.architecture >>
-          command: |
-            ls -lah /debians/
-            # if the SERVER_HOSTNAME is just bobcat, we replace this with the ENV var BOBCAT_APTLY_SERVER
-            if [ "${SERVER_HOSTNAME}" == "bobcat" ]; then
-              SERVER_HOSTNAME="${BOBCAT_APTLY_SERVER}"
-            fi
-            # uses the parameter expansion syntax ${parameter:+word}
-            REPO="${ARCHITECTURE:+$ARCHITECTURE-}experimental"
-            aptly repo deploy -r "${REPO}" -n "${CIRCLE_BUILD_NUM}" -p "/debians"
+  manualdeploy:
+    when:
+      or: [ << pipeline.parameters.manual-bobcat-deploy >>, << pipeline.parameters.manual-bobcat-deploy >> ]
+    jobs:
+      - greenzie/deploy:
+          
+          name: "manual_deploy_all_bobcat"
+          server_hostname: bobcat
+          filters:
+            
+          requires:
+            - arm64_debian_build
+            - amd_debian_build
