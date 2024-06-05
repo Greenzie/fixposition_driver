@@ -18,11 +18,13 @@ workflows:
           name: "amd_debian_build"
           platform: amd64
           executor: greenzie/debianize_amd64
+          clone_submodules: false
 
       - greenzie/debian_build:
           name: "arm64_debian_build"
           platform: arm64
           executor: greenzie/debianize_arm64
+          clone_submodules: false
 
       # Deployment jobs
       - greenzie/debian_deploy_experimental:
