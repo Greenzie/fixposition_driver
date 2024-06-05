@@ -25,7 +25,7 @@ workflows:
           executor: greenzie/debianize_arm64
 
       # Deployment jobs
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           context: GREENZIE
           filters:
@@ -35,7 +35,7 @@ workflows:
           requires:
             - amd_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_arm64_greenzie"
           context: GREENZIE
           architecture: arm64
@@ -46,7 +46,7 @@ workflows:
           requires:
             - arm64_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           context: GREENZIE
           name: "deploy_all_bobcat"
           server_hostname: bobcat
@@ -72,7 +72,7 @@ workflows:
           platform: arm64
           executor: greenzie/debianize_arm64
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           context: GREENZIE
           name: "manual_deploy_all_bobcat"
           server_hostname: bobcat
