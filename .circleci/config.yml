@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@dev:clone_submodules
+  greenzie: greenzie/build_and_publish_debs@dev:clone_submodules2
 
 workflows:
   version: 2
