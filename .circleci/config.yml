@@ -21,7 +21,7 @@ workflows:
           clone_submodules: true
 
       # Deployment jobs
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           filters:
             branches:
@@ -30,7 +30,7 @@ workflows:
           requires:
             - amd_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_arm64_greenzie"
           architecture: arm64
           filters:
@@ -40,7 +40,7 @@ workflows:
           requires:
             - arm64_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_all_bobcat"
           server_hostname: bobcat
           filters:
