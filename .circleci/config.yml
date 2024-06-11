@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@0.0.2
+  greenzie: greenzie/build_and_publish_debs@dev:clone_submodules2
 
 workflows:
   version: 2
@@ -12,14 +12,16 @@ workflows:
           name: "amd_debian_build"
           platform: amd64
           executor: greenzie/debianize_amd64
+          clone_submodules: true
 
       - greenzie/debian_build:
           name: "arm64_debian_build"
           platform: arm64
           executor: greenzie/debianize_arm64
+          clone_submodules: true
 
       # Deployment jobs
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           filters:
             branches:
@@ -28,7 +30,7 @@ workflows:
           requires:
             - amd_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_arm64_greenzie"
           architecture: arm64
           filters:
@@ -38,7 +40,7 @@ workflows:
           requires:
             - arm64_debian_build
 
-      - greenzie/deploy:
+      - greenzie/debian_deploy_experimental:
           name: "deploy_all_bobcat"
           server_hostname: bobcat
           filters:
