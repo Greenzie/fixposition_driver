@@ -1,12 +1,14 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@dev:clone_submodules
+  greenzie: greenzie/build_and_publish_debs@0.0.4
+
 
 parameters:
   manual-bobcat-deploy:
     type: boolean
     default: false
+
 
 workflows:
   version: 2
@@ -18,13 +20,13 @@ workflows:
           name: "amd_debian_build"
           platform: amd64
           executor: greenzie/debianize_amd64
-          clone_submodules: false
+          clone_submodules: true
 
       - greenzie/debian_build:
           name: "arm64_debian_build"
           platform: arm64
           executor: greenzie/debianize_arm64
-          clone_submodules: false
+          clone_submodules: true
 
       # Deployment jobs
       - greenzie/debian_deploy_experimental:
