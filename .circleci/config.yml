@@ -20,7 +20,6 @@ workflows:
           platform: amd64
           executor: greenzie/debianize_amd64
           clone_submodules: true
-          
 
       - greenzie/debian_build:
           name: "arm64_debian_build"
