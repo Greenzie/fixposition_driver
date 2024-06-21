@@ -1,8 +1,7 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@0.0.4
-
+  greenzie: greenzie/build_and_publish_debs@0.0.5
 
 parameters:
   manual-bobcat-deploy:
