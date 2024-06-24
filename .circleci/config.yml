@@ -31,10 +31,10 @@ workflows:
       - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           context: GREENZIE
-#          filters:
-#            branches:
-#              only:
-#                - noetic
+          filters:
+            branches:
+              only:
+                - noetic
           requires:
             - amd_debian_build
 
@@ -42,10 +42,10 @@ workflows:
           name: "deploy_arm64_greenzie"
           context: GREENZIE
           architecture: arm64
-#          filters:
-#            branches:
-#              only:
-#                - noetic
+          filters:
+            branches:
+              only:
+                - noetic
           requires:
             - arm64_debian_build
 
@@ -53,10 +53,10 @@ workflows:
           context: GREENZIE
           name: "deploy_all_bobcat"
           server_hostname: bobcat
-#          filters:
-#            branches:
-#              only:
-#                - noetic
+          filters:
+            branches:
+              only:
+                - noetic
           requires:
             - arm64_debian_build
             - amd_debian_build
