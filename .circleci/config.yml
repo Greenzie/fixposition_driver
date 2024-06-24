@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@0.0.5
+  greenzie: greenzie/build_and_publish_debs@dev:fix_aptly
 
 parameters:
   manual-bobcat-deploy:
@@ -31,10 +31,10 @@ workflows:
       - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           context: GREENZIE
-          filters:
-            branches:
-              only:
-                - noetic
+#          filters:
+#            branches:
+#              only:
+#                - noetic
           requires:
             - amd_debian_build
 
