@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
     <name>fixposition_driver_ros1</name>
-    <version>5.0.0</version>
+    <version>7.0.3</version>
     <description>Fixposition ROS Driver</description>
 
     <maintainer email="info@fixposition.com">Fixposition AG</maintainer>
