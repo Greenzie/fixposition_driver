@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.5)
 project(fixposition_odometry_converter_ros1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always -Wall -Wextra -Wpedantic -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic\
+    -Wshadow -Wunused-parameter -Wformat -Wpointer-arith")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -33,7 +34,6 @@ add_executable(
   src/odom_converter_node.cpp
   src/odom_converter.cpp
   src/params.cpp
-
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
