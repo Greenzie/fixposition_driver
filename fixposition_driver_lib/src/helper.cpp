@@ -14,12 +14,12 @@
 
 /* PACKAGE */
 #include <fixposition_driver_lib/helper.hpp>
-#include <fixposition_driver_lib/nov_type.hpp>
+#include <fixposition_driver_lib/messages/nov_type.hpp>
 
 namespace fixposition {
 
-static constexpr const char kNmeaPreamble = '$';
-static constexpr const int kLibParserMaxNmeaSize = 400;
+static constexpr char kNmeaPreamble = '$';
+static constexpr int kLibParserMaxNmeaSize = 400;
 
 void SplitMessage(std::vector<std::string>& tokens, const std::string& msg, const std::string& delim) {
     boost::split(tokens, msg, boost::is_any_of(delim));
@@ -43,14 +43,14 @@ void BestGnssPosToNavSatFix(const Oem7MessageHeaderMem* const header, const BEST
 
     switch (static_cast<PositionOrVelocityType>(bestgnsspos->pos_type)) {
         case PositionOrVelocityType::NARROW_INT:
-            navsatfix.status.status = static_cast<uint8_t>(NavSatStatusData::Status::STATUS_GBAS_FIX);
+            navsatfix.status.status = static_cast<int8_t>(NavSatStatusData::Status::STATUS_GBAS_FIX);
             break;
         case PositionOrVelocityType::NARROW_FLOAT:
         case PositionOrVelocityType::SINGLE:
-            navsatfix.status.status = static_cast<uint8_t>(NavSatStatusData::Status::STATUS_FIX);
+            navsatfix.status.status = static_cast<int8_t>(NavSatStatusData::Status::STATUS_FIX);
             break;
         default:
-            navsatfix.status.status = static_cast<uint8_t>(NavSatStatusData::Status::STATUS_NO_FIX);
+            navsatfix.status.status = static_cast<int8_t>(NavSatStatusData::Status::STATUS_NO_FIX);
     }
 
     // TODO hardcoded for now for all 4 systems

@@ -2,6 +2,11 @@
 
 _For questions about compatibility, please contact Fixpositions Support support@fixposition.com_
 
+## x.x.x
+
+    - Remove support and CI for ROS 1 Melodic and ROS 2 Dashing/Eloquent/Foxy/Galactic
+    - Do CI for Noetic, Humble and Jazzy
+
 ## [6.1.3](https://github.com/fixposition/fixposition_driver/releases/tag/6.1.3)
 
     - Improve README
@@ -45,7 +50,7 @@ _For questions about compatibility, please contact Fixpositions Support support@
 ## [4.4.0](https://github.com/fixposition/fixposition_driver/releases/tag/4.4.0)
 
     -   Pitch-Roll estimation from IMU data parsed from Vision-RTK 2, output available before fusion initialization.
-    -   OdometryConverter imeplemented as an example for wheelspeed data integration.
+    -   OdometryConverter implemented as an example for wheelspeed data integration.
 
 ## [4.3.0](https://github.com/fixposition/fixposition_driver/releases/tag/4.3.0)
 
