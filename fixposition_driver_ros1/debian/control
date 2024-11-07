@@ -15,7 +15,8 @@ Build-Depends: debhelper (>= 9.0.0),
   ros-noetic-sensor-msgs,
   ros-noetic-std-msgs,
   ros-noetic-tf,
-  ros-noetic-tf2-geometry-msgs
+  ros-noetic-tf2-geometry-msgs,
+  ros-noetic-rtcm-msgs
 Homepage: 
 Standards-Version: 3.9.2
 
@@ -34,5 +35,6 @@ Depends: ${shlibs:Depends},
   ros-noetic-sensor-msgs,
   ros-noetic-std-msgs,
   ros-noetic-tf,
-  ros-noetic-tf2-geometry-msgs
+  ros-noetic-tf2-geometry-msgs,
+  ros-noetic-rtcm-msgs
 Description: Fixposition ROS Driver
