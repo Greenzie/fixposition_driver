@@ -12,10 +12,6 @@
  *
  */
 
-/* ROS */
-#include <ros/console.h>
-#include <ros/ros.h>
-
 /* PACKAGE */
 #include <fixposition_driver_ros1/params.hpp>
 
@@ -29,6 +25,9 @@ bool LoadParamsFromRos1(const std::string& ns, FpOutputParams& params) {
     const std::string IP = ns + "/ip";
     const std::string PORT = ns + "/port";
     const std::string BAUDRATE = ns + "/baudrate";
+    const std::string COV_WARNING = ns + "/cov_warning";
+    const std::string NAV2_MODE = ns + "/nav2_mode";
+
     // read parameters
     if (!ros::param::get(RATE, params.rate)) {
         params.rate = 100;
@@ -37,6 +36,14 @@ bool LoadParamsFromRos1(const std::string& ns, FpOutputParams& params) {
     if (!ros::param::get(RECONNECT_DELAY, params.reconnect_delay)) {
         params.reconnect_delay = 5.0;
         ROS_WARN("Using Default Reconnect Delay : %f", params.reconnect_delay);
+    }
+    if (!ros::param::get(COV_WARNING, params.cov_warning)) {
+        params.cov_warning = false;
+        ROS_WARN("Using Default Covariance Warning option : %i", params.cov_warning);
+    }
+    if (!ros::param::get(NAV2_MODE, params.nav2_mode)) {
+        params.nav2_mode = false;
+        ROS_WARN("Using Default Nav2 mode option : %i", params.nav2_mode);
     }
 
     std::string type_str;
@@ -53,7 +60,7 @@ bool LoadParamsFromRos1(const std::string& ns, FpOutputParams& params) {
     }
 
     if (!ros::param::get(FORMATS, params.formats)) {
-        params.formats = {"ODOMETRY", "LLH", "RAWIMU", "CORRIMU", "TF"};
+        params.formats = {"ODOMETRY", "RAWIMU", "CORRIMU", "TF"};
     }
 
     for (size_t i = 0; i < params.formats.size(); i++) {
@@ -97,6 +104,14 @@ bool LoadParamsFromRos1(const std::string& ns, CustomerInputParams& params) {
         ROS_WARN("Using Default Speed Topic : %s", params.speed_topic.c_str());
     }
     ROS_INFO("%s : %s", SPEED_TOPIC.c_str(), params.speed_topic.c_str());
+
+    const std::string RTCM_TOPIC = ns + "/rtcm_topic";
+    if (!ros::param::get(RTCM_TOPIC, params.rtcm_topic)) {
+        // default value for the topic name
+        params.rtcm_topic = "/fixposition/rtcm";
+        ROS_WARN("Using Default Rtcm Topic : %s", params.rtcm_topic.c_str());
+    }
+    ROS_INFO("%s : %s", RTCM_TOPIC.c_str(), params.rtcm_topic.c_str());
 
     return true;
 }
