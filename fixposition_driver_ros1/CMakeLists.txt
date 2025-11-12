@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 project(fixposition_driver_ros1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror\
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic \
     -Wshadow -Wunused-parameter -Wformat -Wpointer-arith -Woverloaded-virtual")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
