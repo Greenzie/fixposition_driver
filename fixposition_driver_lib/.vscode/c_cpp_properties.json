@@ -1,0 +1,36 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/nick/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/argo_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/beagle_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_common/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_development_tools/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_logic/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_navigation/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_perception/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/greenzie_rviz_plugins/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/hri-safe-remote-control-system/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/intrepid_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/luna_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/nova_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/raptor_hardware/include/**",
+        "/home/nick/catkin_ws/src/robotic-lawnmower/robot_localization/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
