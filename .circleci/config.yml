@@ -21,7 +21,7 @@ workflows:
           name: "amd_debian_build"
           platform: amd64
           executor: greenzie/debianize_amd64
-          clone_submodules: true
+          clone_submodules: false
 
       - greenzie/debian_build:
           context: GREENZIE
