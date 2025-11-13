@@ -29,6 +29,22 @@ workflows:
           executor: greenzie/debianize_arm64
           clone_submodules: true
 
+  manualdeploy:
+    when: << pipeline.parameters.manual-bobcat-deploy >>
+    jobs:
+      # Build jobs
+      - greenzie/debian_build:
+          context: GREENZIE
+          name: "amd_debian_build"
+          platform: amd64
+          executor: greenzie/debianize_amd64
+
+      - greenzie/debian_build:
+          context: GREENZIE
+          name: "arm64_debian_build"
+          platform: arm64
+          executor: greenzie/debianize_arm64
+
       # Deployment jobs
       - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
@@ -61,28 +77,3 @@ workflows:
                 - noetic
           requires:
             - arm64_debian_build
-            - amd_debian_build
-
-  manualdeploy:
-    when: << pipeline.parameters.manual-bobcat-deploy >>
-    jobs:
-      # Build jobs
-      - greenzie/debian_build:
-          context: GREENZIE
-          name: "amd_debian_build"
-          platform: amd64
-          executor: greenzie/debianize_amd64
-
-      - greenzie/debian_build:
-          context: GREENZIE
-          name: "arm64_debian_build"
-          platform: arm64
-          executor: greenzie/debianize_arm64
-
-      - greenzie/debian_deploy_experimental:
-          context: GREENZIE
-          name: "manual_deploy_all_bobcat"
-          server_hostname: bobcat
-          requires:
-            - arm64_debian_build
-            - amd_debian_build
