@@ -60,17 +60,19 @@ workflows:
           requires:
             - arm64_debian_build
             - amd_debian_build
-  
+
   manualdeploy:
     when: << pipeline.parameters.manual-bobcat-deploy >>
     jobs:
       # Build jobs
       - greenzie/debian_build:
+          context: GREENZIE
           name: "amd_debian_build"
           platform: amd64
           executor: greenzie/debianize_amd64
 
       - greenzie/debian_build:
+          context: GREENZIE
           name: "arm64_debian_build"
           platform: arm64
           executor: greenzie/debianize_arm64
