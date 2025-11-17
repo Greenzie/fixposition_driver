@@ -1,12 +1,13 @@
 Source: ros-noetic-fixposition-driver-ros1
 Section: misc
 Priority: optional
-Maintainer: Fixposition AG <info@fixposition.com>
+Maintainer: Fixposition AG <support@fixposition.com>
 Build-Depends: debhelper (>= 9.0.0),
   ros-noetic-catkin,
   ros-noetic-eigen-conversions,
   ros-noetic-fixposition-driver-lib,
-  ros-noetic-fixposition-gnss-tf,
+  ros-noetic-fixposition-driver-msgs,
+  ros-noetic-fixposition-sdk,
   ros-noetic-geometry-msgs,
   ros-noetic-message-generation,
   ros-noetic-message-runtime,
@@ -26,7 +27,8 @@ Depends: ${shlibs:Depends},
   ${misc:Depends},
   ros-noetic-eigen-conversions,
   ros-noetic-fixposition-driver-lib,
-  ros-noetic-fixposition-gnss-tf,
+  ros-noetic-fixposition-driver-msgs,
+  ros-noetic-fixposition-sdk,
   ros-noetic-geometry-msgs,
   ros-noetic-message-generation,
   ros-noetic-message-runtime,
