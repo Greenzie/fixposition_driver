@@ -5,7 +5,6 @@ Maintainer: Fixposition AG <support@fixposition.com>
 Build-Depends: debhelper (>= 9.0.0), 
               ros-noetic-catkin, 
               ros-noetic-eigen-conversions,
-              ros-noetic-fpsdk-common, 
               ros-noetic-geometry-msgs, 
               ros-noetic-message-generation, 
               ros-noetic-message-runtime, 
