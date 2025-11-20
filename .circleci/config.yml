@@ -15,7 +15,7 @@ jobs:
             pwd
             cd $CIRCLE_WORKING_DIRECTORY
             bash .circleci/build_debian_package.sh
-            
+
 
 workflows:
   version: 2
