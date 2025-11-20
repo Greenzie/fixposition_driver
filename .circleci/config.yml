@@ -6,7 +6,7 @@ orbs:
 
 jobs:
   debian_build:
-    executor: greenzie/debian_builder
+    executor: greenzie/debianize_amd64
     steps:
       - checkout
       - run:
@@ -18,9 +18,7 @@ jobs:
 workflows:
   version: 2
   pushbuild:
-    unless: << pipeline.parameters.manual-bobcat-deploy >>
     jobs:
       # Build jobs
       - debian_build:
           context: GREENZIE
-
