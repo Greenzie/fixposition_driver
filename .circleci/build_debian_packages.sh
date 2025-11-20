@@ -53,7 +53,7 @@ for PKG in "${ALL_PACKAGES[@]}"; do
     # Install *all* .deb files produced by this package before building the next
     if ls "$PKG"/*.deb 1>/dev/null 2>&1; then
         echo "Installing generated packages from $PKG"
-        apt -y install "$PKG"/*.deb || true
+        apt -y install "$PKG"/../*.deb || true
     fi
 done
 
