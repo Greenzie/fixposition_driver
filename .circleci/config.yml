@@ -36,3 +36,5 @@ workflows:
       - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           context: GREENZIE
+          requires:
+            - debian_build
