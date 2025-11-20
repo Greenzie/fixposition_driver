@@ -73,9 +73,7 @@ for pkg in "${ALL_PACKAGES[@]}"; do
     deb_dir="$(dirname "$pkg")"
 
     # debuild places .deb files in parent directory of pkg
-    shopt -s nullglob
-    local_deb_files=("$deb_dir"/"${deb_prefix}"*.deb)
-    shopt -u nullglob
+    local_deb_files=("./$deb_dir"/../"${deb_prefix}"*.deb)
 
     if ((${#local_deb_files[@]} > 0)); then
         echo "Installing ${deb_prefix}*.deb from $deb_dir"
