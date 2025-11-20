@@ -10,7 +10,7 @@ git submodule update --init --recursive
 
 greenzie-release changelog -r "noetic" --with-submodules || true
 
-mkdir -p /tmp/alldebs
+mkdir -p /debians
 
 ### 1) fixposition-sdk / fpsdk_common
 cd fixposition-sdk/fpsdk_common
@@ -19,7 +19,7 @@ apt -y build-dep .
 debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
 cd ..
 apt -y install ./ros-noetic-fpsdk-common*.deb
-cp ./ros-noetic-fpsdk-common_*.deb /tmp/alldebs/
+cp ./ros-noetic-fpsdk-common_*.deb /debians/
 
 
 ### 2) fixposition-sdk / fpsdk_ros1
@@ -29,7 +29,7 @@ apt -y build-dep .
 debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
 cd ..
 apt -y install ./ros-noetic-fpsdk-ros1*.deb
-cp ./ros-noetic-fpsdk-ros1_*.deb /tmp/alldebs/
+cp ./ros-noetic-fpsdk-ros1_*.deb /debians/
 
 ### 3) fixposition_driver_lib
 cd ../fixposition_driver_lib
@@ -38,7 +38,7 @@ apt -y build-dep .
 debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
 cd ..
 apt -y install ./ros-noetic-fixposition-driver-lib*.deb
-cp ./ros-noetic-fixposition-driver-lib_*.deb /tmp/alldebs/
+cp ./ros-noetic-fixposition-driver-lib_*.deb /debians/
 
 ### 4) fixposition_driver_msgs
 cd fixposition_driver_msgs
@@ -47,7 +47,7 @@ apt -y build-dep .
 debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
 cd ..
 apt -y install ./ros-noetic-fixposition-driver-msgs*.deb
-cp ./ros-noetic-fixposition-driver-msgs_*.deb /tmp/alldebs/
+cp ./ros-noetic-fixposition-driver-msgs_*.deb /debians/
 
 ### 5) fixposition_driver_ros1
 cd fixposition_driver_ros1
@@ -56,21 +56,7 @@ apt -y build-dep .
 debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
 cd ..
 apt -y install ./ros-noetic-fixposition-driver-ros1*.deb
-cp ./ros-noetic-fixposition-driver-ros1_*.deb /tmp/alldebs/
+cp ./ros-noetic-fixposition-driver-ros1_*.deb /debians/
 
-### 6) rtcm_msgs
-cd rtcm_msgs
-greenzie-release changelog -r "noetic" --with-submodules
-apt -y build-dep .
-debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
-cd ..
-apt -y install ./ros-noetic-rtcm-msgs*.deb
-cp ./ros-noetic-rtcm-msgs_*.deb /tmp/alldebs/
-
-
-### Package collection
-mkdir -p /artifacts
-cd /tmp
-tar cvf /artifacts/all_debs.tar ./alldebs/*.deb
 ### Done
-echo "All package builds complete."
+echo "All package builds complete. All debians are located in /debians"

@@ -15,6 +15,15 @@ jobs:
             pwd
             cd $CIRCLE_WORKING_DIRECTORY
             bash .circleci/build_debian_packages.sh
+            cd /root/
+            tar -cvf /debians/alldebians.tar -C /debians/ .
+      - store_artifacts:
+          path: /debians/
+          destination: debian_packages
+      - persist_to_workspace:
+          root: /debians/
+          paths:
+            - '*'
 
 
 workflows:
@@ -23,4 +32,7 @@ workflows:
     jobs:
       # Build jobs
       - debian_build:
+          context: GREENZIE
+      - greenzie/debian_deploy_experimental:
+          name: "deploy_amd64_greenzie"
           context: GREENZIE
