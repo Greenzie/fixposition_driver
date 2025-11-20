@@ -55,8 +55,7 @@ for PKG in "${ALL_PACKAGES[@]}"; do
         echo "Installing generated packages from $PKG"
         apt -y install "$PKG"/*.deb || true
     fi
-
-done.
+done
 
 # (Removed duplicate driver loop — everything now handled in ALL_PACKAGES)
 
