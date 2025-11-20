@@ -1,5 +1,6 @@
 #!/bin/bash
 set -x
+set -eo pipefail
 
 ls -lah
 apt update
