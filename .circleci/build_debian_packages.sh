@@ -1,57 +1,6 @@
 #!/bin/bash
 set -x
 
-# --- DEFINITION: dictionary mapping directories → deb prefixes ---
-declare -A DEB_MAP=(
-    ["fixposition-sdk/fpsdk_common"]="ros-noetic-fpsdk-common"
-    ["fixposition-sdk/fpsdk_ros1"]="ros-noetic-fpsdk-ros1"
-    ["fixposition_driver_lib"]="ros-noetic-fixposition-driver-lib"
-    ["fixposition_driver_msgs"]="ros-noetic-fixposition-driver-msgs"
-    ["fixposition_driver_ros1"]="ros-noetic-fixposition-driver-ros1"
-    ["rtcm_msgs"]="ros-noetic-rtcm-msgs"
-)
-
-# Build order comes directly from dictionary keys
-# Explicit build order (associative arrays are NOT ordered)
-ALL_PACKAGES=(
-    "fixposition-sdk/fpsdk_common"
-    "fixposition-sdk/fpsdk_ros1"
-    "fixposition_driver_lib"
-    "fixposition_driver_msgs"
-    "fixposition_driver_ros1"
-    "rtcm_msgs"
-)
-
-# --- Helper function ---
-build_pkg() {
-    local dir="$1"
-
-    echo "=== Building $dir ==="
-
-    if [[ ! -d "$dir" ]]; then
-        echo "[ERROR] Directory $dir does not exist, skipping"
-        exit 1
-    fi
-
-    cd "$dir" || {
-        echo "[ERROR] Failed to cd into $dir" >&2
-        exit 1
-    }
-
-    greenzie-release changelog -r "noetic" --with-submodules
-    apt -y build-dep .
-
-    if ! debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt; then
-        echo "[ERROR] Build failed for $dir" >&2
-        exit 1
-    fi
-
-    cd - >/dev/null || true
-    echo "=== Finished $dir ==="
-    echo
-}
-
-# --- Global setup ---
 ls -lah
 apt update
 
@@ -60,29 +9,67 @@ git submodule update --init --recursive
 
 greenzie-release changelog -r "noetic" --with-submodules || true
 
-# --- Main loop ---
-for pkg in "${ALL_PACKAGES[@]}"; do
-    build_pkg "$pkg"
+mkdir -p /tmp/alldebs
 
-    deb_prefix="${DEB_MAP[$pkg]:-}"
-    if [[ -z "$deb_prefix" ]]; then
-        echo "[ERROR] No deb prefix defined for $pkg, skipping install step" >&2
-        exit 1
-    fi
+### 1) fixposition-sdk / fpsdk_common
+cd fixposition-sdk/fpsdk_common
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-fpsdk-common*.deb
+cp ./ros-noetic-fpsdk-common_*.deb /tmp/alldebs/
 
-    deb_dir="$(dirname "$pkg")"
 
-    # debuild places .deb files in parent directory of pkg
-    local_deb_files=("./$deb_dir"/../"${deb_prefix}"*.deb)
+### 2) fixposition-sdk / fpsdk_ros1
+cd fpsdk_ros1
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-fpsdk-ros1*.deb
+cp ./ros-noetic-fpsdk-ros1_*.deb /tmp/alldebs/
 
-    if ((${#local_deb_files[@]} > 0)); then
-        echo "Installing ${deb_prefix}*.deb from $deb_dir"
-        apt -y install "${local_deb_files[@]}"
-    else
-        echo "[ERROR] Expected deb ${deb_prefix} not found in $deb_dir" >&2
-        exit 1
-    fi
+### 3) fixposition_driver_lib
+cd ../fixposition_driver_lib
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-fixposition-driver-lib*.deb
+cp ./ros-noetic-fixposition-driver-lib_*.deb /tmp/alldebs/
 
-done
+### 4) fixposition_driver_msgs
+cd fixposition_driver_msgs
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-fixposition-driver-msgs*.deb
+cp ./ros-noetic-fixposition-driver-msgs_*.deb /tmp/alldebs/
 
+### 5) fixposition_driver_ros1
+cd fixposition_driver_ros1
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-fixposition-driver-ros1*.deb
+cp ./ros-noetic-fixposition-driver-ros1_*.deb /tmp/alldebs/
+
+### 6) rtcm_msgs
+cd rtcm_msgs
+greenzie-release changelog -r "noetic" --with-submodules
+apt -y build-dep .
+debuild --no-tgz-check -b --no-sign --lintian-opts --suppress-tags dir-or-file-in-opt
+cd ..
+apt -y install ./ros-noetic-rtcm-msgs*.deb
+cp ./ros-noetic-rtcm-msgs_*.deb /tmp/alldebs/
+
+
+### Package collection
+mkdir -p /artifacts
+cd /tmp
+tar cvf /artifacts/all_debs.tar ./alldebs/*.deb
+### Done
 echo "All package builds complete."
