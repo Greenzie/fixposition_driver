@@ -33,6 +33,7 @@ jobs:
 workflows:
   version: 2
   pushbuild:
+    when: not << pipeline.parameters.manual_deploy>>
     jobs:
       # Build jobs
       - debian_build:
