@@ -1,84 +1,40 @@
+---
 version: 2.1
 
 orbs:
   greenzie: greenzie/build_and_publish_debs@volatile
 
-parameters:
-  manual-bobcat-deploy:
-    type: boolean
-    default: false
+jobs:
+  debian_build:
+    executor: greenzie/debianize_amd64
+    steps:
+      - checkout
+      - run:
+          name: Build and Publish Debian Package
+          command: |
+            pwd
+            cd $CIRCLE_WORKING_DIRECTORY
+            bash .circleci/build_debian_packages.sh
+            cd /root/
+            tar -cvf /debians/alldebians.tar -C /debians/ .
+      - store_artifacts:
+          path: /debians/
+          destination: debian_packages
+      - persist_to_workspace:
+          root: /debians/
+          paths:
+            - '*'
 
 
 workflows:
   version: 2
   pushbuild:
-    unless: << pipeline.parameters.manual-bobcat-deploy >>
     jobs:
       # Build jobs
-      - greenzie/debian_build:
-          name: "amd_debian_build"
-          platform: amd64
-          executor: greenzie/debianize_amd64
-          clone_submodules: true
-
-      - greenzie/debian_build:
-          name: "arm64_debian_build"
-          platform: arm64
-          executor: greenzie/debianize_arm64
-          clone_submodules: true
-
-      # Deployment jobs
-      - greenzie/debian_deploy_experimental:
-          name: "deploy_amd64_greenzie"
+      - debian_build:
           context: GREENZIE
-          filters:
-            branches:
-              only:
-                - noetic
-          requires:
-            - amd_debian_build
-
-      - greenzie/debian_deploy_experimental:
-          name: "deploy_arm64_greenzie"
-          context: GREENZIE
-          architecture: arm64
-          filters:
-            branches:
-              only:
-                - noetic
-          requires:
-            - arm64_debian_build
-
-      - greenzie/debian_deploy_experimental:
-          context: GREENZIE
-          name: "deploy_all_bobcat"
-          server_hostname: bobcat
-          filters:
-            branches:
-              only:
-                - noetic
-          requires:
-            - arm64_debian_build
-            - amd_debian_build
-  
-  manualdeploy:
-    when: << pipeline.parameters.manual-bobcat-deploy >>
-    jobs:
-      # Build jobs
-      - greenzie/debian_build:
-          name: "amd_debian_build"
-          platform: amd64
-          executor: greenzie/debianize_amd64
-
-      - greenzie/debian_build:
-          name: "arm64_debian_build"
-          platform: arm64
-          executor: greenzie/debianize_arm64
-
-      - greenzie/debian_deploy_experimental:
-          context: GREENZIE
-          name: "manual_deploy_all_bobcat"
-          server_hostname: bobcat
-          requires:
-            - arm64_debian_build
-            - amd_debian_build
+#      - greenzie/debian_deploy_experimental:
+#          name: "deploy_amd64_greenzie"
+#          context: GREENZIE
+#          requires:
+#            - debian_build
