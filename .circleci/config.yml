@@ -9,9 +9,8 @@ parameters:
     type: boolean
     default: false
 
-jobs:
-  debian_build:
-    executor: greenzie/debianize_amd64
+commands:
+  build_debian_packages:
     steps:
       - checkout
       - run:
@@ -30,6 +29,36 @@ jobs:
           paths:
             - '*'
 
+jobs:
+  debian_build:
+    executor: greenzie/debianize_amd64
+    steps:
+      - build_debian_packages
+  debian_build_arm64:
+    executor: greenzie/debianize_arm64
+    steps:
+      - run:
+          name: Fix arm64 sources
+          command: |
+                set -x
+                server=http://aptly.greenzie.com
+                UBUNTU_DISTRO=focal
+                rm -r /etc/apt/sources.list.d/*
+                ls -lah /etc/apt/
+                cat /etc/apt/sources.list
+                echo "deb ${server}/greenzie-experimental ${UBUNTU_DISTRO} main" > /etc/apt/sources.list
+                echo "deb ${server}/ubuntu-arm64-experimental ${UBUNTU_DISTRO} main" >> /etc/apt/sources.list
+
+                # The base image has a newer version of libuuid1 than what something in this chain of dependencies needs:
+                # ros-noetic-roscpp ros-noetic-rosconsole ros-noetic-rosbag ros-noetic-topic-tools libapr1-dev libaprutil1-dev liblog4cxx-dev uuid-dev
+                # downgrades are not done automatically, so we have to do it manually here.
+                # This avoids apt -y build-dep . failures.
+                apt-get update
+                apt-get install -y --allow-downgrades libuuid1=2.34-0.1ubuntu9.4
+
+      - build_debian_packages
+
+
 workflows:
   version: 2
   pushbuild:
@@ -38,14 +67,19 @@ workflows:
       # Build jobs
       - debian_build:
           context: GREENZIE
+      - debian_build_arm64:
+          context: GREENZIE
 
   manual_deploy:
     when: << pipeline.parameters.manual_deploy>>
     jobs:
       - debian_build:
           context: GREENZIE
+      - debian_build_arm64:
+          context: GREENZIE
       - greenzie/debian_deploy_experimental:
           name: "deploy_amd64_greenzie"
           context: GREENZIE
           requires:
             - debian_build
+            - debian_build_arm64
