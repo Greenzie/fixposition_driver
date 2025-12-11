@@ -20,7 +20,7 @@ commands:
             cd $CIRCLE_WORKING_DIRECTORY
             bash .circleci/build_debian_packages.sh
             cd /root/
-            tar -cvf /debians/alldebians.tar -C /debians/ .
+            tar -cvf /debians/alldebians_$(uname -m).tar -C /debians/ .
       - store_artifacts:
           path: /debians/
           destination: debian_packages
@@ -78,7 +78,7 @@ workflows:
       - debian_build_arm64:
           context: GREENZIE
       - greenzie/debian_deploy_experimental:
-          name: "deploy_amd64_greenzie"
+          name: "deploy_greenzie"
           context: GREENZIE
           requires:
             - debian_build
