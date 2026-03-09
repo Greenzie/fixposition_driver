@@ -53,19 +53,19 @@ FixpositionDriverNode::~FixpositionDriverNode() { StopNode(); }
 // Helper for advertising output topics
 #define _PUB(_pub_, _type_, _topic_, ...)                          \
     if (_pub_.getTopic().empty()) {                                \
-        ROS_INFO("Advertise %s (" #_type_ ")", (_topic_).c_str()); \
+        ROS_INFO("fixposition_driver_ros1: Advertise %s (" #_type_ ")", (_topic_).c_str()); \
         _pub_ = nh_.advertise<_type_>(_topic_, __VA_ARGS__);       \
     }
 
 // Helper for subscribing to input topics
 #define _SUB(_sub_, _type_, _topic_, ...)                          \
     do {                                                           \
-        ROS_INFO("Subscribe %s (" #_type_ ")", (_topic_).c_str()); \
+        ROS_INFO("fixposition_driver_ros1: Subscribe %s (" #_type_ ")", (_topic_).c_str()); \
         _sub_ = nh_.subscribe<_type_>(_topic_, __VA_ARGS__);       \
     } while (0)
 
 bool FixpositionDriverNode::StartNode() {
-    ROS_INFO("Starting...");
+    ROS_INFO("fixposition_driver_ros1: Starting...");
 
     // Add observers and advertise output topics, depending on configuration
     const std::string output_ns = (params_.output_ns_.empty() ? nh_.getNamespace() : params_.output_ns_);
@@ -260,7 +260,7 @@ bool FixpositionDriverNode::StartNode() {
             novb::NOV_B_BESTGNSSPOS_STRID, [this](const novb::NovbHeader* header, const uint8_t* payload) {
                 if (!PublishNovbBestgnsspos(header, (novb::NovbBestgnsspos*)payload, navsatfix_gnss1_pub_,
                                             navsatfix_gnss2_pub_)) {
-                    ROS_WARN_THROTTLE(1.0, "Bad NOV_B-BESTGNSSPOS");
+                    ROS_WARN_THROTTLE(1.0, "fixposition_driver_ros1: Bad NOV_B-BESTGNSSPOS");
                 }
             });
     }
@@ -271,7 +271,7 @@ bool FixpositionDriverNode::StartNode() {
         driver_.AddNovbObserver(  //
             novb::NOV_B_INSPVAX_STRID, [this](const novb::NovbHeader* header, const uint8_t* payload) {
                 if (!PublishNovbInspvax(header, (novb::NovbInspvax*)payload, novb_inspvax_pub_)) {
-                    ROS_WARN_THROTTLE(1.0, "Bad NOV_B-INSPVAX");
+                    ROS_WARN_THROTTLE(1.0, "fixposition_driver_ros1: Bad NOV_B-INSPVAX");
                 }
                 fusion_epoch_data_.CollectNovbInspvax(header, (novb::NovbInspvax*)payload);
             });
@@ -283,7 +283,7 @@ bool FixpositionDriverNode::StartNode() {
         driver_.AddNovbObserver(  //
             novb::NOV_B_HEADING2_STRID, [this](const novb::NovbHeader* header, const uint8_t* payload) {
                 if (!PublishNovbHeading2(header, (novb::NovbHeading2*)payload, novb_heading2_pub_)) {
-                    ROS_WARN_THROTTLE(1.0, "Bad NOV_B-HEADING2");
+                    ROS_WARN_THROTTLE(1.0, "fixposition_driver_ros1: Bad NOV_B-HEADING2");
                 }
             });
     }
@@ -445,7 +445,7 @@ bool FixpositionDriverNode::StartNode() {
                          });
                     break;
                 default:
-                    ROS_WARN_THROTTLE(1.0, "The selected wheelspeed input type is not supported!");
+                    ROS_WARN_THROTTLE(1.0, "fixposition_driver_ros1: The selected wheelspeed input type is not supported!");
                     break;
             }
         }
@@ -458,7 +458,7 @@ bool FixpositionDriverNode::StartNode() {
 #undef _SUB
 
 void FixpositionDriverNode::StopNode() {
-    ROS_INFO("Stopping...");
+    ROS_INFO("fixposition_driver_ros1: Stopping...");
 
     driver_.RemoveFpaObservers();
     driver_.RemoveNmeaObservers();
@@ -526,7 +526,7 @@ void FixpositionDriverNode::StopNode() {
 void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     // Check if TF is valid
     if (tf_data.rotation.w() == 0 && tf_data.rotation.vec().isZero()) {
-        ROS_WARN_THROTTLE(10.0, "Invalid TF was found! Is the fusion engine initialized? Source: %s, target: %s",
+        ROS_WARN_THROTTLE(10.0, "fixposition_driver_ros1: Invalid TF was found! Is the fusion engine initialized? Source: %s, target: %s",
                           tf_data.frame_id.c_str(), tf_data.child_frame_id.c_str());
         return;
     }
@@ -583,7 +583,7 @@ void FixpositionDriverNode::ProcessOdometryData(const OdometryData& odometry_dat
     if (params_.delay_warning_ > 0.0) {
         const double delay = (ros::Time::now() - fpsdk::ros1::utils::ConvTime(odometry_data.stamp)).toSec();
         if (delay > params_.delay_warning_) {
-            ROS_WARN_THROTTLE(1.0, "The system is experiencing significant delays! (estimated delay: %.3f seconds)",
+            ROS_WARN_THROTTLE(5.0, "fixposition_driver_ros1: The system is experiencing significant delays! (estimated delay: %.3f seconds)",
                               delay);
         }
     }
@@ -599,7 +599,7 @@ void FixpositionDriverNode::ProcessOdometryData(const OdometryData& odometry_dat
 
             // Output jump warning
             if (params_.cov_warning_ && odometry_data.valid && jump_detector_.Check(odometry_data)) {
-                ROS_WARN(jump_detector_.warning_.c_str());
+                ROS_WARN("fixposition_driver_ros1: %s", jump_detector_.warning_.c_str());
                 PublishJumpWarning(jump_detector_, jump_pub_);
             }
 
@@ -728,10 +728,10 @@ int main(int argc, char** argv) {
     HelloWorld();
 
     // Load parameters
-    ROS_INFO("Loading parameters...");
+    ROS_INFO("fixposition_driver_ros1: Loading parameters...");
     DriverParams driver_params;
     if (!LoadParamsFromRos1("~", driver_params)) {
-        ROS_ERROR("Failed loading sensor params");
+        ROS_ERROR("fixposition_driver_ros1: Failed loading sensor params");
         ok = false;
     }
 
@@ -744,22 +744,22 @@ int main(int argc, char** argv) {
         try {
             node = std::make_unique<FixpositionDriverNode>(driver_params, node_handle);
         } catch (const std::exception& ex) {
-            ROS_ERROR("Failed creating node: %s", ex.what());
+            ROS_ERROR("fixposition_driver_ros1: Failed creating node: %s", ex.what());
             ok = false;
         }
     }
     if (ok) {
-        ROS_INFO("Starting node...");
+        ROS_INFO("fixposition_driver_ros1: Starting node...");
         if (node->StartNode()) {
-            ROS_INFO("main() spinning...");
+            ROS_INFO("fixposition_driver_ros1: main() spinning...");
             // Use multiple spinner threads. Callback execute in one of them.
             ros::AsyncSpinner spinner(4);
             spinner.start();
             sigint.WaitAbort();
             spinner.stop();
-            ROS_INFO("main() stopping");
+            ROS_INFO("fixposition_driver_ros1: main() stopping");
         } else {
-            ROS_ERROR("Failed starting node");
+            ROS_ERROR("fixposition_driver_ros1: Failed starting node");
             ok = false;
         }
         node->StopNode();
@@ -768,9 +768,9 @@ int main(int argc, char** argv) {
 
     // Are we happy?
     if (ok) {
-        ROS_INFO("Done");
+        ROS_INFO("fixposition_driver_ros1: Done");
     } else {
-        ROS_FATAL("Ouch!");
+        ROS_FATAL("fixposition_driver_ros1: Ouch!");
     }
 
     // Shutdown ROS
