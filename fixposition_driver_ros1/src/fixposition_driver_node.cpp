@@ -599,7 +599,7 @@ void FixpositionDriverNode::ProcessOdometryData(const OdometryData& odometry_dat
 
             // Output jump warning
             if (params_.cov_warning_ && odometry_data.valid && jump_detector_.Check(odometry_data)) {
-                ROS_WARN("%s", jump_detector_.warning_.c_str());
+                ROS_WARN(jump_detector_.warning_.c_str());
                 PublishJumpWarning(jump_detector_, jump_pub_);
             }
 
