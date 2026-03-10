@@ -583,7 +583,7 @@ void FixpositionDriverNode::ProcessOdometryData(const OdometryData& odometry_dat
     if (params_.delay_warning_ > 0.0) {
         const double delay = (ros::Time::now() - fpsdk::ros1::utils::ConvTime(odometry_data.stamp)).toSec();
         if (delay > params_.delay_warning_) {
-            ROS_WARN_THROTTLE(1.0, "The system is experiencing significant delays! (estimated delay: %.3f seconds)",
+            ROS_WARN_THROTTLE(5.0, "The system is experiencing significant delays! (estimated delay: %.3f seconds)",
                               delay);
         }
     }
