@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  greenzie: greenzie/build_and_publish_debs@volatile
+  greenzie: greenzie/build_and_publish_debs@0.1.1
 
 parameters:
   manual_deploy:
@@ -30,7 +30,7 @@ commands:
             - '*'
 
 jobs:
-  debian_build:
+  debian_build_amd64:
     executor: greenzie/debianize_amd64
     steps:
       - build_debian_packages
@@ -65,7 +65,7 @@ workflows:
     when: not << pipeline.parameters.manual_deploy>>
     jobs:
       # Build jobs
-      - debian_build:
+      - debian_build_amd64:
           context: GREENZIE
       - debian_build_arm64:
           context: GREENZIE
@@ -73,7 +73,7 @@ workflows:
   manual_deploy:
     when: << pipeline.parameters.manual_deploy>>
     jobs:
-      - debian_build:
+      - debian_build_amd64:
           context: GREENZIE
       - debian_build_arm64:
           context: GREENZIE
@@ -81,5 +81,5 @@ workflows:
           name: "deploy_greenzie"
           context: GREENZIE
           requires:
-            - debian_build
+            - debian_build_amd64
             - debian_build_arm64
